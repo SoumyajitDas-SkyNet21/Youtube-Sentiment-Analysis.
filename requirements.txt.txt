@@ -1,0 +1,7 @@
+streamlit
+google-api-python-client
+vaderSentiment
+matplotlib
+wordcloud
+emoji
+langdetect
