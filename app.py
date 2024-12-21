@@ -40,11 +40,23 @@ def sentiment_scores(comment):
 # Streamlit interface
 st.title('YouTube Comment Sentiment Analysis')
 
-
-
 # Input field for YouTube video URL
 video_url = st.text_input('Enter YouTube Video URL')
 
+# Add an "Analyze" button
+if st.button("Analyze"):
+    if video_url:
+        try:
+            # Extract video ID from URL
+            video_id = video_url[-11:]
+
+            # Fetch comments
+            comments = fetch_comments(video_id)
+
+            if not comments:
+                st.write("No comments fetched. Please check the video URL.")
+            else:
+                st.write(f"Fetched {len(comments)} comments.")
 if video_url:
     # Extract video ID from URL
     video_id = video_url[-11:]
