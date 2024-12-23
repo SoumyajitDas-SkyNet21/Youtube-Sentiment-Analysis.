@@ -6,8 +6,18 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
+# Using the concept of environment variables 
+from dotenv import load_dotenv 
+import os
+
+load_dotenv()  
+
+# Loading the api key using environmental variables
+API_KEY = os.getenv("API_KEY")
+
+
 # API_KEY for YouTube API
-  # Replace with your YouTube API key
+# Replace with your YouTube API key
 youtube = build('youtube', 'v3', developerKey=API_KEY)
 
 # Function to fetch YouTube comments
