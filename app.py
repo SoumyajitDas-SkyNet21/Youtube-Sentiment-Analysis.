@@ -47,86 +47,84 @@ def sentiment_scores(comment):
     return sentiment_dict['compound']
 
 # Streamlit interface
-st.markdown(
-    """
-    <h1 style='text-align: center; font-size: 2.5em;'>
-    YouTube Comment Sentiment Analysis
-    </h1>
-    """,
-    unsafe_allow_html=True
-)
+st.title('YouTube Comment Sentiment Analysis')
+
+
 
 # Input field for YouTube video URL
 video_url = st.text_input('Enter YouTube Video URL')
 
-# Add an "Analyze" button
-if st.button("Analyze"):
-    if video_url:
-        try:
-            # Extract video ID from URL
-            video_id = video_url[-11:]
+if video_url:
+    # Extract video ID from URL
+    video_id = video_url[-11:]
+    st.write(f"Fetching comments for Video ID: {video_id}")
 
-            # Fetch comments
-            comments = fetch_comments(video_id)
+    # Fetch comments
+    comments = fetch_comments(video_id)
 
-            if not comments:
-                st.write("No comments fetched. Please check the video URL.")
-            else:
-                st.write(f"Fetched {len(comments)} comments.")
+    # Filter relevant comments
+    relevant_comments = []
+    threshold_ratio = 0.75
+    hyperlink_pattern = re.compile(
+        r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 
-            # Filter comments (example for text-heavy comments)
-            threshold_ratio = 0.65
-            relevant_comments = []
-            for comment_text in comments:
-                comment_text = comment_text.lower().strip()
-                emojis_count = emoji.emoji_count(comment_text)
-                text_characters = len(re.sub(r'\s', '', comment_text))
-                if any(char.isalnum() for char in comment_text) and (emojis_count == 0 or (text_characters / (text_characters + emojis_count)) > threshold_ratio):
-                    relevant_comments.append(comment_text)
+    for comment_text in comments:
+        comment_text = comment_text.lower().strip()
+        if hyperlink_pattern.search(comment_text):
+            continue
+        emojis_count = emoji.emoji_count(comment_text)
+        text_characters = len(re.sub(r'\s', '', comment_text))
+        if any(char.isalnum() for char in comment_text):
+            if emojis_count == 0 or (text_characters / (text_characters + emojis_count)) > threshold_ratio:
+                relevant_comments.append(comment_text)
 
-            # Sentiment analysis
-            polarities = [sentiment_scores(comment) for comment in relevant_comments]
-            positive = len([p for p in polarities if p > 0.05])
-            negative = len([p for p in polarities if p < -0.05])
-            neutral = len(relevant_comments) - positive - negative
+    # Analyze sentiments
+    positive_comments, negative_comments, neutral_comments = [], [], []
+    polarity = []
 
-            # Visualization
-            st.write("### Sentiment Distribution")
-            labels = ['Positive', 'Negative', 'Neutral']
-            comment_counts = [positive, negative, neutral]
-            colors = ['#76c7c0', '#f76c6c', '#ffcc5c']
+    for comment in relevant_comments:
+        score = sentiment_scores(comment)
+        polarity.append(score)
+        if score > 0.05:
+            positive_comments.append(comment)
+        elif score < -0.05:
+            negative_comments.append(comment)
+        else:
+            neutral_comments.append(comment)
 
-            # Bar Chart
-            st.write("#### Bar Chart")
-            st.bar_chart(comment_counts)
+    # Display Sentiment Distribution as Bar Chart
+    comment_counts = [len(positive_comments), len(negative_comments), len(neutral_comments)]
+    labels = ['Positive', 'Negative', 'Neutral']
+    
+    fig, ax = plt.subplots()
+    ax.bar(labels, comment_counts, color=['#76c7c0', '#f76c6c', '#ffcc5c'])
+    ax.set_title('Sentiment Distribution')
+    ax.set_xlabel('Sentiments')
+    ax.set_ylabel('Number of Comments')
+    st.pyplot(fig)
 
-            # Pie Chart
-            st.write("#### Pie Chart")
-            fig, ax = plt.subplots()
-            ax.pie(comment_counts, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
-            ax.set_title('Sentiment Distribution (Pie Chart)')
-            st.pyplot(fig)
+    # Display Sentiment Distribution as Pie Chart
+    fig, ax = plt.subplots()
+    ax.pie(comment_counts, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#8fd175', '#f76c6c', '#ffd700'])
+    ax.set_title('Sentiment Distribution (Pie Chart)')
+    st.pyplot(fig)
 
-            # Donut Chart
-            st.write("#### Donut Chart")
-            fig, ax = plt.subplots()
-            wedges, texts, autotexts = ax.pie(
-                comment_counts, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors,
-                wedgeprops={'width': 0.3, 'edgecolor': 'w'}
-            )
-            ax.set_title('Sentiment Distribution (Donut Chart)')
-            st.pyplot(fig)
+    # Display Sentiment Distribution as Donut Chart
+    fig, ax = plt.subplots()
+    ax.pie(comment_counts, labels=labels, autopct='%1.1f%%', startangle=90, wedgeprops={'width': 0.4}, colors=['#76c7c0', '#f76c6c', '#ffcc5c'])
+    ax.set_title('Sentiment Distribution (Donut Chart)')
+    st.pyplot(fig)
 
-            # Word Cloud
-            st.write("#### Word Cloud")
-            text = ' '.join(relevant_comments)
-            wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(wordcloud, interpolation='bilinear')
-            ax.axis('off')
-            st.pyplot(fig)
+    # Display Word Cloud
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(' '.join(relevant_comments))
+    st.image(wordcloud.to_array(), use_column_width=True)
 
-        except Exception as e:
-            st.write(f"An error occurred: {e}")
+    # Display Average Polarity
+    avg_polarity = sum(polarity) / len(polarity)
+    st.write(f"Average Polarity: {avg_polarity:.2f}")
+    if avg_polarity > 0.05:
+        st.write("The Video has a Positive Response")
+    elif avg_polarity < -0.05:
+        st.write("The Video has a Negative Response")
     else:
-        st.write("Please enter a YouTube video URL.")
+        st.write("The Video has a Neutral Response")
