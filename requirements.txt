@@ -1,9 +1,9 @@
-streamlit
+streamlit==1.41.1
 google-api-python-client
 vaderSentiment
 matplotlib
 wordcloud
 emoji
 langdetect
-python-dotenv
+python-dotenv==1.0.0
 
