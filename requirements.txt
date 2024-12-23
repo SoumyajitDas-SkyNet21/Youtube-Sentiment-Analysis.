@@ -1,5 +1,5 @@
 streamlit
-googleapiclient
+google-api-python-client
 vaderSentiment
 matplotlib
 wordcloud
