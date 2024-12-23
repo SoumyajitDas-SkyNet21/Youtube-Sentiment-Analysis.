@@ -5,5 +5,4 @@ matplotlib
 wordcloud
 emoji
 langdetect
-python-dotenv
-os
+
