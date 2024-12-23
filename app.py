@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
 # Using the concept of environment variables 
-from dotenv import load_dotenv 
 import os
+from dotenv import load_dotenv 
+
 
 load_dotenv()  
 
